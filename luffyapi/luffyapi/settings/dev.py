@@ -25,10 +25,19 @@ SECRET_KEY = '!v8+1o0a4(e88y0zenbgk=&#ik0*n)dqcv%de60m$x&*isqao('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "api.luffycity.cn",
+    "www.luffycity.cn"
+]
 
 
 # Application definition
+
+# CORS组的配置信息
+CORS_ORIGIN_WHITELIST = (
+    'http://www.luffycity.cn:8080',
+)
+CORS_ALLOW_CREDENTIALS = False  # 允许ajax跨域请求时携带cookie
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,9 +46,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'corsheaders',
+
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,8 +88,13 @@ WSGI_APPLICATION = 'luffyapi.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'luffy',
+        'HOST': '127.0.0.1',
+        'PORT': 3306,
+        'USER': 'luffy_user',
+        'PASSWORD': 'luffy',
+
     }
 }
 
@@ -118,3 +136,55 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# 日志配置
+import os
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(module)s %(lineno)d %(message)s'
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            # 日志位置,日志文件名,日志保存目录必须手动创建
+            'filename': os.path.join(os.path.dirname(BASE_DIR), "logs/luffy.log"),
+            # 日志文件的最大值,这里我们设置300M
+            'maxBytes': 300 * 1024 * 1024,
+            # 日志文件的数量,设置最大日志数量为10
+            'backupCount': 10,
+            # 日志格式:详细格式
+            'formatter': 'verbose'
+        },
+    },
+    # 日志对象
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'propagate': True, # 是否让日志信息继续冒泡给其他的日志处理系统
+        },
+    }
+}
+
+REST_FRAMEWORK = {
+    # 异常处理
+    'EXCEPTION_HANDLER': 'luffyapi.utils.exceptions.custom_exception_handler',
+}
